@@ -1,3 +1,4 @@
+import Mathlib.Logic.Basic
 /-
 In this world In this world, you'll be introduced to negation — which is written
 with the “¬” symbol.
@@ -73,6 +74,11 @@ example : ¬False := by
   exact λ(f : False) ↦ f
 
 
+example : ¬False := by
+  intro h
+  exact h
+
+
 /-
 # Sybeth's Punctuality
 Sybeth is never on time. Despite her assurances that she'll grace the party with
@@ -113,7 +119,8 @@ You've made use of the concept that "false implies anything".
 
 h           : S     → False
 false_elim  : False → B
-Because the righthand side of h and the lefthand side of false_elim match, you can use imp_trans to combine these:
+Because the righthand side of h and the lefthand side of false_elim match, you
+can use imp_trans to combine these:
 
 imp_trans h false_elim
 -/
@@ -155,5 +162,118 @@ Proposition Key:
 L — Lippa is attending the party
 -/
 -- The law of non-self-contradiction
-example (L : Prop) : ¬(L ∧ ¬L) := by
+-- Game constraints: use only `exact`, `have`, and the theorems.
 -- `¬(L ∧ ¬L)` is `(L ∧ ¬L) → False`
+example (L : Prop) : ¬(L ∧ ¬L) := by
+  exact fun lnl =>
+    have nl : ¬L := lnl.right
+    have l : L := lnl.left
+    nl l
+
+
+example (L : Prop) : ¬(L ∧ ¬L) := by
+  intro h
+  exact h.right h.left
+
+
+/- Level 5 / 12 : Modus Tollens
+Modus Tollens
+If Bella comes to the party, she is certain to perform a bawdy song. You've
+assured Sybeth that there will be no bawdy songs at the event. Sybeth is
+disappointed to discover that Bella won't be joining.
+
+Proposition Key:
+B — Bella is attending the party
+S — A bawdy song will be sung
+-/
+-- Game constraints: use only `exact`, `have`, and the theorems.
+theorem modus_tollens0 (B S : Prop)(h1 : B → S)(h2 : ¬S) : ¬B := by
+  exact fun b =>
+    have false : False := h2 $ h1 b
+    False.elim false
+
+-- No constraints soulution, I did first.
+example (B S : Prop)(h1 : B → S)(h2 : ¬S) : ¬B := by
+  intro b  -- (Anton): I do not understand where intro pulled `b` from...
+  have false : False := h2 $ h1 b
+  exact False.elim false
+
+/-
+Congradulations. Did you recognise this proof? It's actually a slightly less
+general version of the proof you used in the "→ Tutotial world, level 4" to show
+that implication is transitive.
+
+Thinking of h₂ as Q → False, you can actually use your imp_trans theorem here.
+
+exact λp ↦ h₂ (h₁ p)
+exact imp_trans h₁ h₂
+For the math-inclined, because the expression for an implication is a function,
+you can also use function composition.
+
+exact h₂ ∘ h₁
+-/
+example (B S : Prop)(h1 : B → S)(h2 : ¬S) : ¬B := by
+  exact h2 ∘ h1
+
+-- (Anton): Is there an imp_trans in Mathlib?
+-- exact? gave me this:
+example (A B C : Prop) (h1 : A → B) (h2: B → C) : A → C := by exact fun a ↦ h2 (h1 a)
+-- so, looks like no--there's no such standard thing, although, I might miss some import.
+-- I tried to `import Mathlib.Logic.Basic` and I get the same:
+example (A B C : Prop) (h1 : A → B) (h2: B → C) : A → C := by exact fun a ↦ h2 (h1 a)
+
+
+/- Level 6 / 12 : Alarfil
+The Alarfil Effect
+You're delighted that Alarfil will be there.
+
+Remarkably, even in moments when Alarfil lacks humor, he manages to be amusing!
+His comedic charm persists, regardless of circumstances.
+
+Proposition Key:
+A — Alarfil is humorless
+
+Remember h : A → A → False
+-/
+example (A : Prop) (h: A → ¬A) : ¬A := by
+  intro a
+  have hf : A → False := h a
+  exact hf a
+
+example (A : Prop) (h: A → ¬A) : ¬A := by
+  exact fun a => (h a) a
+
+
+/- Level 7 / 12 : Negation
+The Power of negation
+"Is it possible that if this is the cake you bought, then it's gonna taste horrible?"
+"I'm certain that's not possible."
+"Oh, so what you're saying is that you have evidence that the cake is delicious!"
+
+Proposition Key:
+B — You bought this cake
+C — The cake tastes horrible
+
+Nested λ↦s.
+-/
+-- No constraints soulution, I did first.
+example (B C : Prop) (h: ¬(B → C)) : ¬C := by
+  have hh : (B → C) → False := h
+  intro c
+  have b_to_c := fun b : B => c
+  exact hh b_to_c
+
+
+-- Game constraints: use only `exact`, `have`, and the theorems.
+example (B C : Prop) (h: ¬(B → C)) : ¬C := by
+  exact fun c =>
+    have b_to_c := fun b : B => c
+    h b_to_c
+
+
+------- I wanted to see how is P ∨ ¬P is handled in Lean.
+theorem excluded_middle (P : Prop) : P ∨ ¬P := Classical.em P
+
+#print axioms excluded_middle
+-- 'excluded_middle' depends on axioms: [propext, Classical.choice, Quot.sound]
+----------
