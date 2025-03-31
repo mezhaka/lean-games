@@ -271,6 +271,36 @@ example (B C : Prop) (h: ¬(B → C)) : ¬C := by
     h b_to_c
 
 
+/- Level 8 / 12 : Negated Conjunction
+Definitely Not
+Your cake order definitely has sprinkles, which means it's not missing sprinkles
+and loaded with chocolate chips
+
+Proposition Key:
+C — The cake is loaded with chocolate chips
+S — The cake is topped with sprinkles
+Negation into conjuction.
+-/
+example (C S : Prop) (s: S) : ¬(¬S ∧ C) := by
+  exact fun h : ¬S ∧ C =>
+    have not_s : ¬S := h.left
+    not_s s
+
+
+/- Level 9 / 12 : Implies a Negation
+Allergy #1
+Owing to his allergy, if Pippin is present, there must be no avocado at the
+party. Which means that we cannot have both Pippin and avacado at the party
+
+Proposition Key:
+A — There's avacado at the party
+P — Pippin is attending the party
+Show ¬(P ∧ A)
+-/
+example (A P : Prop) (h : P → ¬A) : ¬(P ∧ A) := by
+  exact fun pa : P ∧ A =>
+    have na : ¬A := h pa.left
+    na pa.right
 ------- I wanted to see how is P ∨ ¬P is handled in Lean.
 theorem excluded_middle (P : Prop) : P ∨ ¬P := Classical.em P
 
