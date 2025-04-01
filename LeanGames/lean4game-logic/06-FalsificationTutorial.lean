@@ -301,6 +301,50 @@ example (A P : Prop) (h : P → ¬A) : ¬(P ∧ A) := by
   exact fun pa : P ∧ A =>
     have na : ¬A := h pa.left
     na pa.right
+
+
+/- Level 10 / 12 : Conjunction Implicaiton
+Allergy #2
+We cannot have both Pippin and avacado at the party. Which means that if Pippin
+is attending, then there will not be any avacado.
+
+Proposition Key:
+A — There's avacado at the party
+P — Pippin is attending the party
+Show P → ¬A.
+-/
+
+-- No constraints soulution, I did first.
+example (A P : Prop) (h: ¬(P ∧ A)) : P → ¬A := by
+  intro p a
+  have h : (P ∧ A) → False := h
+  have false : False := h (And.intro p a)
+  exact false
+
+-- Game constraints: use only `exact`, `have`, and the theorems.
+-- I figured that I can use a `fun` with two variables by looking at my previous solution.
+-- I was trying to make a nested lambda, but failed.
+example (A P : Prop) (h: ¬(P ∧ A)) : P → ¬A := by
+  exact fun (p : P) (a : A) => h (And.intro p a)
+
+-- OK, here's the nested lambda, but I figured it kind of backwards, cause all Lean functions are
+-- curried.
+example (A P : Prop) (h: ¬(P ∧ A)) : P → ¬A := by
+  exact fun (p : P) =>
+          fun (a : A) => h (And.intro p a)
+
+/-
+That's settled... again!
+
+Reminder that these are the same:
+
+λp ↦ λa ↦ h ⟨p,a⟩
+-- and
+λp a ↦ h ⟨p,a⟩
+-/
+-- Interesting, one does not need a space after `λ`.
+example (A P : Prop) (h: ¬(P ∧ A)) : P → ¬A := by
+  exact λp ↦ λa ↦ h (And.intro p a)
 ------- I wanted to see how is P ∨ ¬P is handled in Lean.
 theorem excluded_middle (P : Prop) : P ∨ ¬P := Classical.em P
 
