@@ -187,7 +187,7 @@ B — Bella is attending the party
 S — A bawdy song will be sung
 -/
 -- Game constraints: use only `exact`, `have`, and the theorems.
-theorem modus_tollens0 (B S : Prop)(h1 : B → S)(h2 : ¬S) : ¬B := by
+theorem modus_tollens (B S : Prop)(h1 : B → S)(h2 : ¬S) : ¬B := by
   exact fun b =>
     have false : False := h2 $ h1 b
     False.elim false
@@ -195,6 +195,7 @@ theorem modus_tollens0 (B S : Prop)(h1 : B → S)(h2 : ¬S) : ¬B := by
 -- No constraints soulution, I did first.
 example (B S : Prop)(h1 : B → S)(h2 : ¬S) : ¬B := by
   intro b  -- (Anton): I do not understand where intro pulled `b` from...
+  -- I do now: the `¬B` to the right of the `:` is `B → False`, so `intro` gets me `B`.
   have false : False := h2 $ h1 b
   exact False.elim false
 
@@ -345,9 +346,95 @@ Reminder that these are the same:
 -- Interesting, one does not need a space after `λ`.
 example (A P : Prop) (h: ¬(P ∧ A)) : P → ¬A := by
   exact λp ↦ λa ↦ h (And.intro p a)
+
+
+/- Level 11 / 12 : not_not_not
+Allergy: Triple Confusion
+Pippin is allergic to avocado. You tell him you're not not not bringing
+avacado!!! Pippin gives you a confused look, but after a moment of
+contemplation, he responds with, "Ok, good to know."
+
+Proposition Key:
+A — You're bringing avacado
+¬A is stable.
+-/
+-- (Anton): I struggled a lot with this one and asked ChatGPT in the end to show me.
+example (A : Prop)(h : ¬¬¬A) : ¬A := by
+  have h1 : ¬¬A → False := h
+  have h2 : ¬(A → False) → False := h1
+  have h3 : ((A → False) → False) → False := h2
+  -- I was stuck at h3. Then I looked up the answer and realized one can write h4.
+  -- However, it was not clear to me why `¬A → False ↔ ¬(A → False)`.
+  have h4 : (¬A → False) → False := h3  -- (Anton) I do not get
+  exact fun a ↦
+    have na_to_false : ¬A → False := fun na : ¬A => na a
+    h4 na_to_false
+
+-- Compactify:
+example (A : Prop)(h : ¬¬¬A) : ¬A := by
+  exact λ a ↦ h (λ na ↦ na a)
+
+example (A : Prop) : ¬A → False ↔ ¬(A → False) := by exact imp_false
+
+example (A : Prop)(h : ¬¬¬A) : ¬A := by
+  intro a
+  -- Before `apply` the goal is `False`. `h` is `¬¬A -> False`. After apply the goal is `¬¬A`.
+  -- (Anton): What I don't quite get is why do we need `intro a` to `apply h`...
+  apply h
+  intro na
+  exact na a
+
+/-
+Level 12 / 12 : ¬Intro Boss
+BOSS Level
+"Is it possible that if this is the cake you bought, then it's gonna taste horrible?"
+"I'm certain that's not possible!"
+"Oh, so what you're saying is that you have evidence that this is not not the cake you bought."
+
+Proposition Key:
+B — You bought this cake
+C — The cake tastes horrible
+¬¬"You bought this cake"
+-/
+example (B C : Prop) (h : ¬(B → C)) : ¬¬B := by
+  intro nb
+  apply h
+  exact fun b : B =>
+    have f : False := nb b
+    False.elim f
+
+
+-- Game constraints: use only `exact`, `have`, and the theorems.
+example (B C : Prop) (h : ¬(B → C)) : ¬¬B := by
+  exact fun nb =>
+    have h1 : (B → C) → False := h
+    have b_to_c : B → C := fun b => False.elim (nb b)
+    h1 b_to_c
+
+
+-- Compactify:
+example (B C : Prop) (h : ¬(B → C)) : ¬¬B := by
+  exact λ nb ↦ h (λ b ↦ False.elim (nb b))
+
+
+-- exact? solution
+example (B C : Prop) (h : ¬(B → C)) : ¬¬B := by
+  exact not_not_of_not_imp h
+
+/-
+Level completed! 🎉
+These unintuitive statements highlight the inherent challenge in contemplating
+the potential existence (or definite non-existance) of implications.
+
+That's a twist of logic, to be sure!
+-/
+
 ------- I wanted to see how is P ∨ ¬P is handled in Lean.
 theorem excluded_middle (P : Prop) : P ∨ ¬P := Classical.em P
 
 #print axioms excluded_middle
 -- 'excluded_middle' depends on axioms: [propext, Classical.choice, Quot.sound]
+#check propext
+#check Classical.choice
+#check Quot.sound
 ----------
